@@ -10,7 +10,9 @@ import { useStoreConfig } from '@/stores/useStoreConfig';
 import { useTheme } from '@/hooks/useTheme';
 
 function HomeRedirect() {
-  const defaultHomepage = useStoreConfig((state) => state.defaultHomepage);
+  const currentStoreId = useStoreConfig((state) => state.currentStoreId);
+  const storeConfigs = useStoreConfig((state) => state.storeConfigs);
+  const defaultHomepage = storeConfigs[currentStoreId]?.defaultHomepage || '/cashier';
   return <Navigate to={defaultHomepage} replace />;
 }
 

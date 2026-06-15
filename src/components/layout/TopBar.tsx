@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useStoreConfig } from '@/stores/useStoreConfig';
 import { useNetworkStore } from '@/stores/useNetworkStore';
-import { storeList } from '@/data/mockData';
+import { storeList, themes } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { OfflineFeatureModal } from './OfflineFeatureModal';
 
@@ -21,32 +21,39 @@ const actionIconMap: Record<string, LucideIcon> = {
 
 export function TopBar() {
   const navigate = useNavigate();
-  const quickActions = useStoreConfig((state) => state.quickActions);
-  const storeName = useStoreConfig((state) => state.storeName);
-  const setStoreName = useStoreConfig((state) => state.setStoreName);
+  const currentStoreId = useStoreConfig((state) => state.currentStoreId);
+  const storeConfigs = useStoreConfig((state) => state.storeConfigs);
   const setTheme = useStoreConfig((state) => state.setTheme);
-  const currentTheme = useStoreConfig((state) => state.getCurrentTheme());
+  const switchStore = useStoreConfig((state) => state.switchStore);
   const isOnline = useNetworkStore((state) => state.isOnline);
   const pendingSyncCount = useNetworkStore((state) => state.pendingSyncCount);
   const toggleOnline = useNetworkStore((state) => state.toggleOnline);
+
+  const currentConfig = useMemo(
+    () => storeConfigs[currentStoreId],
+    [storeConfigs, currentStoreId]
+  );
+  const storeName = currentConfig?.storeName || '';
+  const quickActions = currentConfig?.quickActions || [];
+  const themeId = currentConfig?.themeId || 'classic-blue';
+  const currentTheme = themes.find((t) => t.id === themeId);
+
+  const themeOptions = themes.map((t) => ({
+    id: t.id,
+    name: t.name,
+    color: t.colors.primary,
+  }));
 
   const [showStoreDropdown, setShowStoreDropdown] = useState(false);
   const [showThemeDropdown, setShowThemeDropdown] = useState(false);
   const [showOfflineModal, setShowOfflineModal] = useState(false);
 
-  const themeOptions = [
-    { id: 'classic-blue', name: '经典蓝', color: '#1E3A8A' },
-    { id: 'warm-orange', name: '活力橙', color: '#EA580C' },
-    { id: 'fresh-green', name: '清新绿', color: '#059669' },
-    { id: 'elegant-dark', name: '雅致暗', color: '#1F2937' },
-  ];
-
-  const handleStoreChange = (id: string, name: string) => {
-    setStoreName(name);
-    if (id === 'store-002') setTheme('warm-orange');
-    else if (id === 'store-003') setTheme('classic-blue');
-    else if (id === 'store-004') setTheme('elegant-dark');
-    else setTheme('classic-blue');
+  const handleStoreChange = (storeId: string) => {
+    switchStore(storeId);
+    const target = storeList.find((s) => s.storeId === storeId);
+    if (target) {
+      navigate(storeConfigs[storeId]?.defaultHomepage || '/cashier');
+    }
     setShowStoreDropdown(false);
   };
 
@@ -67,15 +74,19 @@ export function TopBar() {
               {storeList.map((store) => (
                 <button
                   key={store.storeId}
-                  onClick={() => handleStoreChange(store.storeId, store.storeName)}
+                  onClick={() => handleStoreChange(store.storeId)}
                   className={cn(
-                    'w-full px-4 py-2.5 text-left text-sm transition-colors',
-                    store.storeName === storeName
+                    'w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center gap-2.5',
+                    store.storeId === currentStoreId
                       ? 'bg-primary/5 text-primary font-medium'
                       : 'text-slate-600 hover:bg-slate-50'
                   )}
                 >
+                  <Icons.Store className="w-4 h-4" />
                   {store.storeName}
+                  {store.storeId === currentStoreId && (
+                    <Icons.Check className="w-4 h-4 ml-auto" />
+                  )}
                 </button>
               ))}
             </div>

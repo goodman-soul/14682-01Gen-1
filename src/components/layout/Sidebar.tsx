@@ -16,7 +16,9 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 export function Sidebar() {
-  const storeName = useStoreConfig((state) => state.storeName);
+  const currentStoreId = useStoreConfig((state) => state.currentStoreId);
+  const storeConfigs = useStoreConfig((state) => state.storeConfigs);
+  const storeName = storeConfigs[currentStoreId]?.storeName || '';
   const isOnline = useNetworkStore((state) => state.isOnline);
 
   return (

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Palette,
   Zap,
@@ -108,14 +108,18 @@ function SortableActionItem({
 }
 
 export function Settings() {
-  const themeId = useStoreConfig((state) => state.themeId);
+  const currentStoreId = useStoreConfig((state) => state.currentStoreId);
+  const storeConfigs = useStoreConfig((state) => state.storeConfigs);
   const setTheme = useStoreConfig((state) => state.setTheme);
-  const quickActions = useStoreConfig((state) => state.quickActions);
   const setQuickActions = useStoreConfig((state) => state.setQuickActions);
-  const defaultHomepage = useStoreConfig((state) => state.defaultHomepage);
   const setDefaultHomepage = useStoreConfig((state) => state.setDefaultHomepage);
-  const storeName = useStoreConfig((state) => state.storeName);
   const setStoreName = useStoreConfig((state) => state.setStoreName);
+
+  const currentConfig = storeConfigs[currentStoreId];
+  const themeId = currentConfig?.themeId || 'classic-blue';
+  const quickActions = currentConfig?.quickActions || [];
+  const defaultHomepage = currentConfig?.defaultHomepage || '/cashier';
+  const storeName = currentConfig?.storeName || '';
 
   const [selectedTheme, setSelectedTheme] = useState(themeId);
   const [editingName, setEditingName] = useState(false);
@@ -125,6 +129,12 @@ export function Settings() {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  useEffect(() => {
+    setSelectedTheme(themeId);
+    setEditingName(false);
+    setTempName(storeName);
+  }, [currentStoreId, themeId, storeName]);
 
   const availableToAdd = useMemo(() => {
     const selectedIds = new Set(quickActions.map((a) => a.id));

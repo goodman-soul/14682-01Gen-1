@@ -1,19 +1,22 @@
 import { useEffect } from 'react';
 import { useStoreConfig } from '@/stores/useStoreConfig';
+import { themes } from '@/data/mockData';
 import type { ThemeConfig } from '@/types';
 
 export function useTheme() {
-  const themeId = useStoreConfig((state) => state.themeId);
-  const getCurrentTheme = useStoreConfig((state) => state.getCurrentTheme);
+  const currentStoreId = useStoreConfig((state) => state.currentStoreId);
+  const storeConfigs = useStoreConfig((state) => state.storeConfigs);
   const setTheme = useStoreConfig((state) => state.setTheme);
 
-  const currentTheme = getCurrentTheme();
+  const currentConfig = storeConfigs[currentStoreId];
+  const themeId = currentConfig?.themeId || 'classic-blue';
+  const currentTheme: ThemeConfig | undefined = themes.find((t) => t.id === themeId);
 
   useEffect(() => {
     if (currentTheme) {
       applyThemeToDOM(currentTheme);
     }
-  }, [themeId, currentTheme]);
+  }, [currentStoreId, themeId, currentTheme]);
 
   return {
     currentTheme,
